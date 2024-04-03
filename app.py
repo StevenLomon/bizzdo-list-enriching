@@ -3,7 +3,6 @@ import pandas as pd
 import streamlit as st
 from rich import print
 from bs4 import BeautifulSoup
-from io import BytesIO
 
 headers = ({'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36', 
             'Accept-Language': 'en-US,en;q=0.5',
@@ -60,7 +59,7 @@ def extract_full_name(url, headers):
         pass
     return h1
 
-def transform_df(df):
+def transform_df(df, progress_bar, status_text):
     df.rename(columns= {'CompanyLink':'Företag', 'LabeledText__text':'Omsättning', 
                         'LabeledText__text 2':'Resultat', 'CompanyLink href':'Bizzdo URL'}, inplace=True)
 
@@ -73,7 +72,11 @@ def transform_df(df):
     personal_phone_list = []
 
     for index, row in df.iterrows():
-        print(f"Processing row #{index}")
+        # Update progress bar and status text
+        progress = int((index + 1) / len(df) * 100)
+        progress_bar.progress(progress)
+        status_text.text(f"Processing row {index + 1} of {len(df)}")
+
         company_name_query_1 = row['Företag'].replace(' ', '%20').strip()
         company_name_query_2 = row['Företag'].lower().replace(' ', '+').strip()
         hitta_url = f"https://www.hitta.se/s%C3%B6k?vad={company_name_query_1}"
@@ -116,6 +119,10 @@ def transform_df(df):
     df['Få kontorsnummer från'] = pd.Series(office_phone_list, index=df.index)
     df['Få personligt nummer från'] = pd.Series(personal_phone_list, index=df.index)
 
+    # Reset progress bar at the end of the function
+    progress_bar.empty()
+    status_text.text("Done processing!")
+
     return df
 
 def generate_csv(dataframe, result_name):
@@ -135,21 +142,24 @@ uploaded_file = st.file_uploader("Upload your input CSV file", type=["csv"])
 if st.button('Generate File'):
     if uploaded_file is not None:
         with st.spinner('Generating file, hold on'):
+            # Create a progress bar and a dynamic text element
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
             print("Running...")
             start_time = time.time()
             df = pd.read_csv(uploaded_file)
             total_number_of_rows = len(df)
             st.write(f"About to process {total_number_of_rows} rows")
-            df_transformed = transform_df(df)
+
+            df_transformed = transform_df(df, progress_bar, status_text)
             end_time = time.time()
             st.text(f"Done! Processed {total_number_of_rows} in {end_time - start_time} seconds")
             with open ("times.txt", "a") as f:
                 f.write(f"Total: {total_number_of_rows}, Time: {end_time - start_time}\n")
-
 
             csv = generate_csv(df_transformed, result_name)
             with open(csv, "rb") as file:
                 st.download_button(label="Download enriched list as csv", data=file, file_name=csv, mime='text/csv')
     else:
         st.error("There was an error handling the uploaded csv. Please try again")
-    
