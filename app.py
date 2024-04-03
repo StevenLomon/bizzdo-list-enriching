@@ -1,4 +1,4 @@
-import requests, time, re
+import requests, time, re, asyncio, aiohttp
 import pandas as pd
 import streamlit as st
 from rich import print
