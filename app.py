@@ -75,7 +75,7 @@ def transform_df(df, progress_bar, status_text):
         # Update progress bar and status text
         progress = int((index + 1) / len(df) * 100)
         progress_bar.progress(progress)
-        status_text.text(f"Processing row {index + 1} of {len(df)}")
+        status_text.text(f"Processing row {index + 1} out of {len(df)}")
 
         company_name_query_1 = row['Företag'].replace(' ', '%20').strip()
         company_name_query_2 = row['Företag'].lower().replace(' ', '+').strip()
@@ -154,7 +154,7 @@ if st.button('Generate File'):
 
             df_transformed = transform_df(df, progress_bar, status_text)
             end_time = time.time()
-            st.text(f"Done! Processed {total_number_of_rows} in {end_time - start_time} seconds")
+            st.text(f"Done! Processed {total_number_of_rows} rows in {end_time - start_time} seconds")
             with open ("times.txt", "a") as f:
                 f.write(f"Total: {total_number_of_rows}, Time: {end_time - start_time}\n")
 
