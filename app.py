@@ -91,10 +91,10 @@ def transform_df(df, progress_bar, status_text):
             if company_page:
                 org_nr, webpage = extract_org_and_website_status(company_page, headers)
                 office_phone_url = company_page
+        fname = lname = None
         if org_nr:
             beslutfattare_page = f"https://hitta.se/företagsinformation/{company_name_query_2}/{org_nr}#persons"
             age, city, personal_url = extract_age_city_and_personal_url(beslutfattare_page, headers)
-            fname = lname = None
             if personal_url:
                 full_name = extract_full_name(personal_url, headers)
                 try:
