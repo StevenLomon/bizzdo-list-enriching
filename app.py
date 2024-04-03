@@ -153,7 +153,6 @@ if st.button('Generate File'):
             start_time = time.time()
             df = pd.read_csv(uploaded_file)
             total_number_of_rows = len(df)
-            st.write(f"About to process {total_number_of_rows} rows")
 
             df_transformed = transform_df(df, progress_bar, status_text)
             end_time = time.time()
