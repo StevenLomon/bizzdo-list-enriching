@@ -60,8 +60,9 @@ def extract_full_name(url, headers):
     return h1
 
 def transform_df(df, progress_bar, status_text):
-    df.rename(columns= {'CompanyLink':'Företag', 'rt-td':'Omsättning', 
-                        'rt-td 2':'Resultat', 'CompanyLink href':'Bizzdo URL'}, inplace=True)
+    df.drop(['CompanyLogo src'], axis=1)
+    df.rename(columns= {'CompanyLink href':'Bizzdo URL', 'CompanyLink':'Företag', 
+                        'rt-td':'Omsättning', 'rt-td 2':'Resultat', }, inplace=True)
 
     webpage_list = []
     vd_fname_list = []
