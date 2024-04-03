@@ -24,21 +24,22 @@ def construct_company_page(url, headers):
 def extract_org_and_website_status(url, headers):
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
-    org_nr = soup.find('p', class_="text-caption-md-regular color-text-placeholder").text.split()[1].replace('-', '')
-    webpage_source = soup.find('a', attrs={'data-track':'homepage-detail-noncustomer'})
-    webpage = None
-    if webpage_source is None:
-        webpage = "Missing"
-    else:
-        webpage = webpage_source.get('href')
+    org_nr = webpage = None
+    try:
+        org_nr = soup.find('p', class_="text-caption-md-regular color-text-placeholder").text.split()[1].replace('-', '')
+    except:
+        pass
+    try:
+        webpage_source = soup.find('a', attrs={'data-track':'homepage-detail-noncustomer'})
+        webpage = webpage_source.get('href') if webpage_source else "Missing"
+    except:
+        pass
     return (org_nr, webpage)
 
 def extract_age_city_and_personal_url(url, headers):
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
-    age = None
-    city = None
-    next_page = None
+    age = city = next_page = None
     try:
         info = soup.find('div', class_='finance-persons__text-container').find_all('div')[2].text
         age = int(info.split(",")[0].split()[0])
