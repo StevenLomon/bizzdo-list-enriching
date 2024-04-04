@@ -1,0 +1,25 @@
+FIND THE FIRST DIV OF class="finance-persons__text-container" AND SEE IF IT HAS AN a ELEMENT. IF IT DOESN'T,
+FIND THE FIRST DIV OF class="finance-persons__text-container" AND SEE IF IT HAS AN a ELEMENT. IF IT DOESN'T,
+TAKE THE TEXT OF THE SPAN: https://www.hitta.se/f%C3%B6retagsinformation/mattsons+bygg+och+j%C3%A4rn+i+mora+aktiebolag/5563741544#persons
+IF WE HAVE A CLICKABLE a ELEMENT, TAKE THE ENTIRE STRING. DO NOT BOTHER WITH FIRST NAME AND LAST NAME
+https://www.hitta.se/bernt+fredrik+lind%C3%A9n/bara/person/i0zzzlZ__C
+IF THERE IS MORE THAN ONE SEARCH RESULT FOR THE COMPANY, LEAVE AN URL. IT WON'T ALWAYS BE THE TOP RESULT!
+https://www.hitta.se/s%C3%B6k?vad=Motorsport%20i%20Vimmerby%20AB
+This brings an interesting case; even if we have the city, there can be 2+ matching results, so 100% just put the URL:
+https://www.hitta.se/s%C3%B6k?vad=%C3%85kes%20Motor%20Aktiebolag
+The two results can be of the same company and the verified one won't be the top result: https://www.hitta.se/s%C3%B6k?vad=Br%C3%B6derna%20H%C3%A5kanssons%20R%C3%B6r%20AB
+THIS COMPANY ALSO BRINGS IMPORTANT INSIGHT: THERE WON'T ALWAYS BE A LINK TO BEFATTNINGSHAVARE!
+IN THESE CASES: SEARCH FOR THE COMPANY ON PROFF? Link to a search on Proff. The reason we can't find a befattnings-
+havare on Hitta.se could be that the company is liquidated
+IN SOME CASES, THE HITTA.SE PERSONAL PAGE WILL HAVE A PERSONAL NUMBER. IN THESE CASES: PUT THE URL
+IN A COLUMN WITH PERSONAL NUMBERS? LOOK FOR THE PAGE SELECTOR AND DON'T CRASH THE PROGRAM IF IT ISN'T THERE
+https://www.hitta.se/anders+wel%C3%A9n/v%C3%A4ster%C3%A5s/person/dl_XO1GGGk
+THERE CAN BE CASES WHERE WE ACCESS THE SITE BUT IT WILL BE EMPTY??????????????
+https://www.hitta.se/f%C3%B6retagsinformation/finncont+ab/5592042807#persons
+The same company gives several results on Proff.se where the one we want just happens to be the top result. 
+IF TEXT == "1 resultat", PROCEED, OTHERWIRSE GIVE THE SEARCH URL
+THE SAME COMPANY ALSO SHOWS "Likvidation" on Proff. wtf
+An example where the tilltalsnamn is not the middle one: https://www.hitta.se/f%C3%B6retagsinformation/f%C3%A4rgelanda+bygghandel+ab/5569218968#persons
+Sometimes the VD:s personal number can be on the company page? https://www.hitta.se/sun+off+lule%C3%A5/gammelstad/jgvhiobzd
+Same but without the names?? https://www.hitta.se/allv%C3%A4rmeteknik+kvv+ab/valdemarsvik/kmsdhcos
+The company search can give 69 results, none of them being the one we want: https://www.hitta.se/s%C3%B6k?vad=Tidab%20AB
