@@ -1,5 +1,4 @@
 FIND THE FIRST DIV OF class="finance-persons__text-container" AND SEE IF IT HAS AN a ELEMENT. IF IT DOESN'T,
-FIND THE FIRST DIV OF class="finance-persons__text-container" AND SEE IF IT HAS AN a ELEMENT. IF IT DOESN'T,
 TAKE THE TEXT OF THE SPAN: https://www.hitta.se/f%C3%B6retagsinformation/mattsons+bygg+och+j%C3%A4rn+i+mora+aktiebolag/5563741544#persons
 IF WE HAVE A CLICKABLE a ELEMENT, TAKE THE ENTIRE STRING. DO NOT BOTHER WITH FIRST NAME AND LAST NAME
 https://www.hitta.se/bernt+fredrik+lind%C3%A9n/bara/person/i0zzzlZ__C

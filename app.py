@@ -1,4 +1,4 @@
-import requests, time
+import requests, time, re
 import pandas as pd
 import streamlit as st
 from rich import print
@@ -10,66 +10,84 @@ headers = ({'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
             'Referer': 'https://www.hitta.se/',
             'DNT': '1',})
 
-def construct_company_page(url, headers):
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    page = None
-    try:
-        href = soup.find('a', class_="style_searchResultLink__2i2BY").get('href')
-        page = f"https://hitta.se{href}"
-    except:
-        pass
-    return page
+def format_for_krafman(company_name):
+    company_name = company_name.lower()
+    company_name = re.sub(r'[^\w\s]', '', company_name)
+    company_name = re.sub(r'\s+', ' ', company_name)  # Collapse multiple spaces into one
+    company_name = company_name.strip()  # Remove leading/trailing spaces
+    company_name = company_name.replace(' ', '-')
+    return company_name
 
-def extract_org_and_website_status(url, headers):
-    response = requests.get(url, headers=headers)
+def attempt_to_extract_org_and_website_status(hitta_search_url, headers):
+    response = requests.get(hitta_search_url, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
     org_nr = webpage = None
-    try:
-        org_nr = soup.find('p', class_="text-caption-md-regular color-text-placeholder").text.split()[1].replace('-', '')
-    except:
-        pass
-    try:
-        webpage_source = soup.find('a', attrs={'data-track':'homepage-detail-noncustomer'})
-        webpage = webpage_source.get('href') if webpage_source else "Missing"
-    except:
-        pass
-    return (org_nr, webpage)
 
-def extract_age_city_and_personal_url(url, headers):
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    age = city = next_page = None
+    # First of all, see if we are actually on the company page
     try:
-        info = soup.find('div', class_='finance-persons__text-container').find_all('div')[2].text
-        age = int(info.split(",")[0].split()[0])
-        city = info.split(",")[1].strip()
-        href = soup.find('a', attrs={'data-track':'show-person, Styrelsemedlemmar'}).get('href')
-        next_page = f"https://hitta.se{href}"
+        if soup.find('div', class_='section-header--meta'):
+            
+            org_nr = soup.find('p', class_="text-caption-md-regular color-text-placeholder").text.split()[1].replace('-', '')
+            webpage_source = soup.find('a', attrs={'data-track':'homepage-detail-noncustomer'})
+            if webpage_source is None:
+                webpage = "Missing"
+            else:
+                webpage = webpage_source.get('href')
     except:
         pass
-    return (age, city, next_page)
+    return (org_nr, webpage)  
 
-def extract_full_name(url, headers):
-    response = requests.get(url, headers=headers)
+def extract_full_name_age_and_city(befattningshavare_url, headers):
+    response = requests.get(befattningshavare_url, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
-    h1 = None
+    full_name = age = city = None
     try:
-        h1 = soup.find('h1', class_='heading--1').text
+        div = soup.find('div', class_='finance-persons__text-container')
+        if div.find_all('a'):
+            href = soup.find('a', attrs={'data-track':'show-person, Styrelsemedlemmar'}).get('href')
+            divs = div.find_all('div')
+            if divs:
+                info_div = divs[2]
+                if info_div:
+                    age = info_div.text.split()[0]
+                    city = info_div.text.split()[2]
+            next_page = f"https://hitta.se{href}"
+            response = requests.get(next_page, headers=headers)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            try:
+                full_name = soup.find('h1', class_='heading--1').text
+            except:
+                pass
+        else:
+            full_name = div.text
     except:
         pass
-    return h1
+    return (full_name, age, city)
+
+def extract_phone_number(krafman_url, headers):
+    response = requests.get(krafman_url, headers=headers)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    phone_number = None
+    try:
+        info_div = soup.find('div', class_='card card-login card-creditstart ccb s-third')
+        if info_div:
+            form_rows = info_div.find_all('div', class_='form-row')
+            if form_rows and len(form_rows) >= 4:
+                phone_div = form_rows[3]
+                span = phone_div.find('span')
+                if span:
+                    phone_number = span.get_text()
+    except:
+        pass
+    return phone_number
 
 def transform_df(df, progress_bar, status_text):
-    df.drop(['CompanyLogo src'], axis=1)
-    df.rename(columns= {'CompanyLink href':'Bizzdo URL', 'CompanyLink':'Företag', 
-                        'rt-td':'Omsättning', 'rt-td 2':'Resultat', }, inplace=True)
+    df.drop('CompanyLogo src', axis='columns', inplace=True)
+    df.rename(columns= {'CompanyLink':'Företag', 'rt-td':'Omsättning',
+                    'rt-td 2':'Resultat', 'CompanyLink href':'Bizzdo URL'}, inplace=True)
 
+    vd_name_list = []
     webpage_list = []
-    vd_fname_list = []
-    vd_lname_list = []
-    age_list = []
-    city_list = []
     office_phone_list = []
     personal_phone_list = []
 
@@ -79,45 +97,47 @@ def transform_df(df, progress_bar, status_text):
         progress_bar.progress(progress)
         status_text.text(f"Processing row {index + 1} out of {len(df)}")
 
-        company_name_query_1 = row['Företag'].replace(' ', '%20').strip()
+        company_name_query_1 = row['Företag'].replace(' ', '%20').replace('&', '%26').strip()
         company_name_query_2 = row['Företag'].lower().replace(' ', '+').strip()
-        hitta_url = f"https://www.hitta.se/s%C3%B6k?vad={company_name_query_1}"
-        office_phone_url = org_nr = webpage = None
+        company_name_query_3 = format_for_krafman(row['Företag'])
         try:
-            org_nr, webpage = extract_org_and_website_status(hitta_url, headers)
-            office_phone_url = hitta_url
-        except:
-            company_page = construct_company_page(hitta_url, headers)
-            if company_page:
-                org_nr, webpage = extract_org_and_website_status(company_page, headers)
-                office_phone_url = company_page
-        fname = lname = None
-        if org_nr:
-            beslutfattare_page = f"https://hitta.se/företagsinformation/{company_name_query_2}/{org_nr}#persons"
-            age, city, personal_url = extract_age_city_and_personal_url(beslutfattare_page, headers)
-            if personal_url:
-                full_name = extract_full_name(personal_url, headers)
-                try:
-                    fname, lname = full_name.split()
-                except:
-                    pass
+            hitta_url = f"https://www.hitta.se/sök?vad={company_name_query_1}"
 
-        webpage_list.append(webpage)
-        vd_fname_list.append(fname)
-        vd_lname_list.append(lname)
-        age_list.append(age)
-        city_list.append(city)
-        office_phone_list.append(office_phone_url)
-        personal_phone_url = None
-        if fname and lname and city and age:
-            personal_phone_url = f"https://mrkoll.se/resultat?n={fname}+{lname}&c={city}&min={age}&max={age}&sex=a&c_stat=all&company="
-        personal_phone_list.append(personal_phone_url)
+            # Go to the hitta_url, see if we can find a div with class section-header--meta
+            # If we can , we are on the company page. If we can't, we give the url
+            org_nr, webpage = attempt_to_extract_org_and_website_status(hitta_url, headers)
+            if org_nr is None or webpage is None:
+                vd_name_list.append(hitta_url)
+                webpage_list.append(None)
+            else:
+                webpage_list.append(webpage)  
+                try:      
+                    beslutfattare_page = f"https://hitta.se/företagsinformation/{company_name_query_2}/{org_nr}#persons"
+                    full_name, age, city = extract_full_name_age_and_city(beslutfattare_page, headers)
+                    vd_name_list.append(full_name)
+                except:
+                    vd_name_list.append(f"https://proff.se/bransch-sök?q={company_name_query_1}")
+        except:
+            vd_name_list.append(None)
+            webpage_list.append(None)
+
+        try:
+            krafman_url = f"https://krafman.se/{company_name_query_3}/{org_nr}/sammanfattning"
+            phone_number = extract_phone_number(krafman_url, headers)
+            office_phone_list.append(phone_number)
+        except:
+            office_phone_list.append(None)
+
+        if full_name:
+            if age and city:
+                personal_phone_list.append(f"https://mrkoll.se/resultat?n={full_name.lower().replace(' ', '+').strip()}&c={city}&min={age}&max={age}&sex=a&c_stat=all&company=")
+            else:
+                personal_phone_list.append(f"https://mrkoll.se/resultat?n={full_name.lower().replace(' ', '+').strip()}&c=&min=30&max=100&sex=a&c_stat=all&company=")
+        else:
+            personal_phone_list.append(None)
 
     df['Hemsida'] = pd.Series(webpage_list, index=df.index)
-    df['VD Tilltalsnamn'] = pd.Series(vd_fname_list, index=df.index)
-    df['VD Efternamn'] = pd.Series(vd_lname_list, index=df.index)
-    df['VD Ålder'] = pd.Series(age_list, index=df.index)
-    df['VD Stad'] = pd.Series(city_list, index=df.index)
+    df['VD Namn'] = pd.Series(vd_name_list, index=df.index)
     df['Företagsnummer 1'] = None
     df['Företagsnummer 2'] = None
     df['Personligt nummer'] = None
