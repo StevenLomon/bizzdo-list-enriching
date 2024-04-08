@@ -18,10 +18,10 @@ def format_for_krafman(company_name):
     company_name = company_name.replace(' ', '-')
     return company_name
 
-def attempt_to_extract_org_and_website_status(hitta_search_url, headers):
+def attempt_to_extract_org_and_website_and_button_status(hitta_search_url, headers):
     response = requests.get(hitta_search_url, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
-    org_nr = webpage = None
+    org_nr = webpage = buttonexists = None
 
     # First of all, see if we are actually on the company page
     try:
@@ -29,13 +29,18 @@ def attempt_to_extract_org_and_website_status(hitta_search_url, headers):
             
             org_nr = soup.find('p', class_="text-caption-md-regular color-text-placeholder").text.split()[1].replace('-', '')
             webpage_source = soup.find('a', attrs={'data-track':'homepage-detail-noncustomer'})
+            button_source = soup.find('button', class_='style_button__pqvvx style_phoneNumberButton__g0QE1')
             if webpage_source is None:
                 webpage = "Missing"
             else:
                 webpage = webpage_source.get('href')
+            if button_source is None:
+                buttonexists = False
+            else:
+                buttonexists = True
     except:
         pass
-    return (org_nr, webpage)  
+    return (org_nr, webpage, buttonexists)  
 
 def extract_full_name_age_and_city(befattningshavare_url, headers):
     response = requests.get(befattningshavare_url, headers=headers)
@@ -88,7 +93,8 @@ def transform_df(df, progress_bar, status_text):
 
     vd_name_list = []
     webpage_list = []
-    office_phone_list = []
+    phone_list_bizzdo = []
+    phone_list_hitta = []
     personal_phone_list = []
 
     for index, row in df.iterrows():
@@ -105,12 +111,16 @@ def transform_df(df, progress_bar, status_text):
 
             # Go to the hitta_url, see if we can find a div with class section-header--meta
             # If we can , we are on the company page. If we can't, we give the url
-            org_nr, webpage = attempt_to_extract_org_and_website_status(hitta_url, headers)
+            org_nr, webpage, buttonexists = attempt_to_extract_org_and_website_and_button_status(hitta_url, headers)
             if org_nr is None or webpage is None:
                 webpage_list.append(hitta_url)
                 vd_name_list.append(None)
             else:
                 webpage_list.append(webpage)  
+                if buttonexists:
+                    phone_list_hitta.append(hitta_url)
+                else:
+                    phone_list_hitta.append("Saknas på Hitta.se")
                 try:      
                     beslutfattare_page = f"https://hitta.se/företagsinformation/{company_name_query_2}/{org_nr}#persons"
                     full_name, age, city = extract_full_name_age_and_city(beslutfattare_page, headers)
@@ -124,9 +134,9 @@ def transform_df(df, progress_bar, status_text):
         try:
             krafman_url = f"https://krafman.se/{company_name_query_3}/{org_nr}/sammanfattning"
             phone_number = extract_phone_number(krafman_url, headers)
-            office_phone_list.append(phone_number)
+            phone_list_bizzdo.append(phone_number)
         except:
-            office_phone_list.append(None)
+            phone_list_bizzdo.append(None)
 
         if full_name:
             if age and city:
@@ -138,8 +148,8 @@ def transform_df(df, progress_bar, status_text):
 
     df['Hemsida'] = pd.Series(webpage_list, index=df.index)
     df['VD Namn'] = pd.Series(vd_name_list, index=df.index)
-    df['Företagsnummer (Bizzdo)'] = pd.Series(office_phone_list, index=df.index)
-    df['Företagsnummer (Annan sida)'] = None
+    df['Företagsnummer (Bizzdo)'] = pd.Series(phone_list_bizzdo, index=df.index)
+    df['Företagsnummer (Hitta.se)'] = pd.Series(phone_list_hitta, index=df.index)
     df['Personligt nummer'] = None
     df['Få personligt nummer från'] = pd.Series(personal_phone_list, index=df.index)
 
