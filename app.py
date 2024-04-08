@@ -106,6 +106,8 @@ def transform_df(df, progress_bar, status_text):
         company_name_query_1 = row['Företag'].replace(' ', '%20').replace('&', '%26').strip()
         company_name_query_2 = row['Företag'].lower().replace(' ', '+').strip()
         company_name_query_3 = format_for_krafman(row['Företag'])
+        org_nr = webpage = buttonexists = full_name = beslutfattare_page = age = city = krafman_url = phone_number = None
+
         try:
             hitta_url = f"https://www.hitta.se/sök?vad={company_name_query_1}"
 
