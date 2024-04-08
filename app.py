@@ -107,8 +107,8 @@ def transform_df(df, progress_bar, status_text):
             # If we can , we are on the company page. If we can't, we give the url
             org_nr, webpage = attempt_to_extract_org_and_website_status(hitta_url, headers)
             if org_nr is None or webpage is None:
-                vd_name_list.append(hitta_url)
-                webpage_list.append(None)
+                webpage_list.append(hitta_url)
+                vd_name_list.append(None)
             else:
                 webpage_list.append(webpage)  
                 try:      
@@ -138,10 +138,9 @@ def transform_df(df, progress_bar, status_text):
 
     df['Hemsida'] = pd.Series(webpage_list, index=df.index)
     df['VD Namn'] = pd.Series(vd_name_list, index=df.index)
-    df['Företagsnummer 1'] = None
-    df['Företagsnummer 2'] = None
+    df['Företagsnummer (Bizzdo)'] = pd.Series(office_phone_list, index=df.index)
+    df['Företagsnummer (Annan sida)'] = None
     df['Personligt nummer'] = None
-    df['Få företagssnummer från'] = pd.Series(office_phone_list, index=df.index)
     df['Få personligt nummer från'] = pd.Series(personal_phone_list, index=df.index)
 
     # Reset progress bar at the end of the function
