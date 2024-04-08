@@ -115,6 +115,7 @@ def transform_df(df, progress_bar, status_text):
             if org_nr is None or webpage is None:
                 webpage_list.append(hitta_url)
                 vd_name_list.append(None)
+                phone_list_hitta.append(None)
             else:
                 webpage_list.append(webpage)  
                 if buttonexists:
@@ -130,6 +131,7 @@ def transform_df(df, progress_bar, status_text):
         except:
             vd_name_list.append(None)
             webpage_list.append(None)
+            phone_list_hitta.append(None)
 
         try:
             krafman_url = f"https://krafman.se/{company_name_query_3}/{org_nr}/sammanfattning"
