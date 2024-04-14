@@ -31,7 +31,7 @@ def attempt_to_extract_org_and_website_and_button_status(hitta_search_url, heade
             webpage_source = soup.find('a', attrs={'data-track':'homepage-detail-noncustomer'})
             button_source = soup.find('button', class_='style_button__pqvvx style_phoneNumberButton__g0QE1')
             if webpage_source is None:
-                webpage = "Missing"
+                webpage = "Saknas på hitta.se"
             else:
                 webpage = webpage_source.get('href')
             if button_source is None:
@@ -119,7 +119,7 @@ def transform_df(df, progress_bar, status_text):
                 if buttonexists:
                     phone_list_hitta.append(hitta_url)
                 else:
-                    phone_list_hitta.append("Saknas på Hitta.se")
+                    phone_list_hitta.append("Saknas på hitta.se")
                 try:      
                     beslutfattare_page = f"https://hitta.se/företagsinformation/{company_name_query_2}/{org_nr}#persons"
                     full_name, age, city = extract_full_name_age_and_city(beslutfattare_page, headers)
