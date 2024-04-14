@@ -171,6 +171,10 @@ def generate_csv(dataframe, result_name):
     dataframe.to_csv(result_name, index=False)
     return result_name
 
+def convert_seconds_to_minutes_and_seconds(seconds):
+    min, sec = divmod(seconds, 60)
+    return '%02d:%02d' % (min, sec)
+
 ##STREAMLIT
 st.title('Bizzdo List Enricher')
 
@@ -191,7 +195,7 @@ if st.button('Generate File'):
 
             df_transformed = transform_df(df, progress_bar, status_text)
             end_time = time.time()
-            st.text(f"Done! Processed {total_number_of_rows} rows in {end_time - start_time} seconds")
+            st.text(f"Done! Processed {total_number_of_rows} rows in {convert_seconds_to_minutes_and_seconds(end_time - start_time)} minutes")
             with open ("times.txt", "a") as f:
                 f.write(f"Total: {total_number_of_rows}, Time: {end_time - start_time}\n")
 
