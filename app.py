@@ -87,10 +87,6 @@ def extract_phone_number(krafman_url, headers):
     return phone_number
 
 def transform_df(df, progress_bar, status_text):
-    df.drop('CompanyLogo src', axis='columns', inplace=True)
-    df.rename(columns= {'CompanyLink':'Företag', 'rt-td':'Omsättning',
-                    'rt-td 2':'Resultat', 'CompanyLink href':'Bizzdo URL'}, inplace=True)
-
     vd_name_list = []
     webpage_list = []
     phone_list_bizzdo = []
