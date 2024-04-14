@@ -153,8 +153,7 @@ def transform_df(df, progress_bar, status_text):
     df['VD Namn'] = pd.Series(vd_name_list, index=df.index)
     df['Företagsnummer (Bizzdo)'] = pd.Series(phone_list_bizzdo, index=df.index)
     df['Företagsnummer (Hitta.se)'] = pd.Series(phone_list_hitta, index=df.index)
-    df['Personligt nummer'] = None
-    df['Få personligt nummer från'] = pd.Series(personal_phone_list, index=df.index)
+    df['Personligt nummer'] = pd.Series(personal_phone_list, index=df.index)
 
     # Reset progress bar at the end of the function
     progress_bar.empty()
