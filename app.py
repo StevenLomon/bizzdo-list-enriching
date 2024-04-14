@@ -71,6 +71,9 @@ def extract_full_name_age_and_city(befattningshavare_url, headers):
 
 def extract_phone_number(krafman_url, headers):
     response = requests.get(krafman_url, headers=headers)
+    if response.status_code == 403:
+        return "Krafman gave status 403, try again later"
+    
     soup = BeautifulSoup(response.content, 'html.parser')
     phone_number = None
     try:
