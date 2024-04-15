@@ -49,7 +49,7 @@ def extract_full_name_age_and_city(befattningshavare_url, headers):
     try:
         div = soup.find('div', class_='finance-persons__text-container')
         if div.find_all('a'):
-            href = soup.find('a', attrs={'data-track':'show-person, Styrelsemedlemmar'}).get('href')
+            href = soup.find('a', attrs={'data-ga4':'financial-info'}).get('href')
             divs = div.find_all('div')
             if divs:
                 info_div = divs[2]
