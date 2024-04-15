@@ -150,10 +150,13 @@ def transform_df(df, progress_bar, status_text):
             personal_phone_list.append(None)
 
     df['Hemsida'] = pd.Series(webpage_list, index=df.index)
+    df['Har GMB'] = None
     df['VD Namn'] = pd.Series(vd_name_list, index=df.index)
     df['Företagsnummer (Bizzdo)'] = pd.Series(phone_list_bizzdo, index=df.index)
     df['Företagsnummer (Hitta.se)'] = pd.Series(phone_list_hitta, index=df.index)
     df['Personligt nummer'] = pd.Series(personal_phone_list, index=df.index)
+    df['VD Jobbmail'] = None
+    df['VD LinkedIn'] = None
 
     # Reset progress bar at the end of the function
     progress_bar.empty()
